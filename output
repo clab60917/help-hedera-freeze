@@ -1,0 +1,40 @@
+10:29:56 root@localhost hedera_blockchain → node compile6.js
+MongoDB connected and collection is ready.
+New private topic created with ID: 0.0.4284237
+File /root/db_clients/test/1.enc has already been processed.
+File /root/db_clients/test/co.log.enc has already been processed.
+File /root/db_clients/test/co.log.hash.txt has already been processed.
+File /root/db_clients/test/encore.hash.txt has already been processed.
+File /root/db_clients/test/encpww.hash.txt has already been processed.
+File /root/db_clients/test/first_log.log.enc has already been processed.
+File /root/db_clients/test/first_log.log.hash.txt has already been processed.
+File /root/db_clients/test/hashcat.log.enc has already been processed.
+File /root/db_clients/test/hashcat.log.hash.txt has already been processed.
+File /root/db_clients/test/hhhh.log.enc has already been processed.
+File /root/db_clients/test/hhhh.log.hash.txt has already been processed.
+File /root/db_clients/test/jaja.hash.txt has already been processed.
+File /root/db_clients/test/juli.log.enc has already been processed.
+File /root/db_clients/test/juli.log.hash.txt has already been processed.
+File /root/db_clients/test/kkkkk.hash.txt has already been processed.
+File /root/db_clients/test/leel.log.enc has already been processed.
+Message sent to Topic ID 0.0.4284237: Status SUCCESS
+Message sent to Topic ID 0.0.4284237: Status SUCCESS
+Message sent to Topic ID 0.0.4284237: Status SUCCESS
+Message sent to Topic ID 0.0.4284237: Status SUCCESS
+/root/db_clients/test_blockchain/hedera_blockchain/node_modules/@hashgraph/sdk/lib/transaction/Transaction.cjs:1064
+      throw new Error("transaction must have been frozen before getting the transaction ID, try calling `freeze`");
+            ^
+
+Error: transaction must have been frozen before getting the transaction ID, try calling `freeze`
+    at TopicMessageSubmitTransaction._getTransactionId (/root/db_clients/test_blockchain/hedera_blockchain/node_modules/@hashgraph/sdk/lib/transaction/Transaction.cjs:1064:13)
+    at TopicMessageSubmitTransaction.freezeWith (/root/db_clients/test_blockchain/hedera_blockchain/node_modules/@hashgraph/sdk/lib/topic/TopicMessageSubmitTransaction.cjs:233:39)
+    at TopicMessageSubmitTransaction.executeAll (/root/db_clients/test_blockchain/hedera_blockchain/node_modules/@hashgraph/sdk/lib/topic/TopicMessageSubmitTransaction.cjs:286:12)
+    at TopicMessageSubmitTransaction.execute (/root/db_clients/test_blockchain/hedera_blockchain/node_modules/@hashgraph/sdk/lib/topic/TopicMessageSubmitTransaction.cjs:276:24)
+    at sendMessageToTopic (/root/db_clients/test_blockchain/hedera_blockchain/compile6.js:68:38)
+    at FSWatcher.<anonymous> (/root/db_clients/test_blockchain/hedera_blockchain/compile6.js:92:19)
+    at FSWatcher.emit (node:events:513:28)
+    at FSWatcher.emitWithAll (/usr/share/nodejs/chokidar/index.js:540:8)
+    at FSWatcher._emit (/usr/share/nodejs/chokidar/index.js:632:8)
+    at NodeFsHandler._handleFile (/usr/share/nodejs/chokidar/lib/nodefs-handler.js:400:14)
+
+Node.js v18.13.0
