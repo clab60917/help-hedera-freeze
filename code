@@ -1,0 +1,107 @@
+// Load environment variables and libraries
+require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
+const chokidar = require('chokidar');
+const { MongoClient } = require('mongodb');
+const {
+  AccountId,
+  PrivateKey,
+  Client,
+  TopicCreateTransaction,
+  TopicMessageSubmitTransaction
+} = require('@hashgraph/sdk');
+
+const myAccountId = AccountId.fromString(process.env.MY_ACCOUNT_ID);
+const myPrivateKey = PrivateKey.fromString(process.env.MY_PRIVATE_KEY);
+const hederaClient = Client.forTestnet();
+hederaClient.setOperator(myAccountId, myPrivateKey);
+
+const mongoUri = "mongodb://****:****@10*****:27017/?authSource=admin";
+const mongoClient = new MongoClient(mongoUri);
+let messagesCollection;
+
+async function initializeMongoDb() {
+    await mongoClient.connect();
+    const db = mongoClient.db("blockchainMessages");
+    messagesCollection = db.collection("messages");
+    console.log("MongoDB connected and collection is ready.");
+}
+
+const processedFilesPath = path.join(__dirname, 'processedFiles.json');
+const topicIdPath = path.join(__dirname, 'topicId.txt');
+let processedFiles = new Set();
+
+async function loadProcessedFiles() {
+    try {
+        processedFiles = new Set(JSON.parse(await fs.promises.readFile(processedFilesPath, 'utf8')));
+    } catch (err) {
+        console.log('Starting fresh with an empty set of processed files.');
+    }
+}
+
+async function saveProcessedFile(filePath) {
+    processedFiles.add(filePath);
+    await fs.promises.writeFile(processedFilesPath, JSON.stringify([...processedFiles]), 'utf8');
+}
+
+async function ensureTopicExists() {
+    try {
+        const topicId = await fs.promises.readFile(topicIdPath, 'utf8').trim();
+        return topicId;
+    } catch (error) {
+        const txResponse = await new TopicCreateTransaction().execute(hederaClient);
+        const receipt = await txResponse.getReceipt(hederaClient);
+        const newTopicId = receipt.topicId.toString();
+        await fs.promises.writeFile(topicIdPath, newTopicId);
+        console.log(`New private topic created with ID: ${newTopicId}`);
+        return newTopicId;
+    }
+}
+
+async function sendMessageToTopic(topicId, message, filePath) {
+    const messageTx = new TopicMessageSubmitTransaction({
+        topicId: topicId,
+        message: message
+    }).freezeWith(hederaClient);
+
+    const submitTx = await messageTx.execute(hederaClient);
+    const receipt = await submitTx.getReceipt(hederaClient);
+    console.log(`Message sent to Topic ID ${topicId}: Status ${receipt.status}`);
+
+    // Log the message details to MongoDB
+    await messagesCollection.insertOne({
+        topicId,
+        fileName: path.basename(filePath),
+        message,
+        status: receipt.status.toString(),
+        timestamp: new Date()
+    });
+}
+
+async function monitorDirectory() {
+    await initializeMongoDb();
+    await loadProcessedFiles();
+
+    const topicId = await ensureTopicExists();
+
+    const watcher = chokidar.watch('/root/db_clients/test', { persistent: true, ignoreInitial: false });
+    watcher.on('add', async (filePath) => {
+        if (!processedFiles.has(filePath)) {
+            const message = fs.readFileSync(filePath, 'utf8');
+            await sendMessageToTopic(topicId, message, filePath);
+            await saveProcessedFile(filePath);
+        } else {
+            console.log(`File ${filePath} has already been processed.`);
+        }
+    });
+
+    process.on('SIGINT', () => {
+        watcher.close();
+        mongoClient.close();
+        console.log('Shutting down, disconnected from MongoDB');
+        process.exit();
+    });
+}
+
+monitorDirectory();
